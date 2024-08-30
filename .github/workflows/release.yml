@@ -1,0 +1,120 @@
+name: Build and Upload Release Assets
+
+on:
+    release:
+        types: [published]
+
+jobs:
+    build:
+        strategy:
+            matrix:
+                include:
+                    - goos: linux
+                      goarch: amd64
+                      runner: ubuntu-24.04
+                    - goos: linux
+                      goarch: arm64
+                      runner: ubuntu-24.04
+                    - goos: darwin
+                      goarch: amd64
+                      runner: macos-13
+                    - goos: darwin
+                      goarch: arm64
+                      runner: macos-13
+                    - goos: windows
+                      goarch: amd64
+                      runner: windows-2022
+                    - goos: windows
+                      goarch: '386'
+                      runner: windows-2022
+
+        runs-on: ${{ matrix.runner }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: '1.21'
+
+            - name: Get the version and set file extension
+              id: get_version
+              run: |
+                  $VERSION = $(git describe --tags --exact-match 2>$null || git rev-parse HEAD)
+                  echo "VERSION=$VERSION" >> $env:GITHUB_ENV
+                  if ("${{ matrix.goos }}" -eq "windows") {
+                      echo "EXT=.exe" >> $env:GITHUB_ENV
+                  } else {
+                      echo "EXT=" >> $env:GITHUB_ENV
+                  }
+              shell: pwsh
+
+            - name: Build binary
+              run: |
+                  GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=0 \
+                  go build -ldflags="-X main.version=${{ env.VERSION }} -s -w" \
+                  -o vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}
+              shell: bash
+
+            - name: Strip binary (Linux AMD64)
+              if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+              run: |
+                  strip vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}
+              shell: bash
+
+            - name: Strip binary (Linux ARM64)
+              if: matrix.goos == 'linux' && matrix.goarch == 'arm64'
+              run: |
+                  sudo apt-get update && sudo apt-get install -y binutils-aarch64-linux-gnu
+                  aarch64-linux-gnu-strip vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}
+              shell: bash
+
+            - name: Calculate SHA-256 checksum and create checksum file (Linux and macOS)
+              if: matrix.goos != 'windows'
+              run: |
+                  shasum -a 256 vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }} > vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}.sha256
+              shell: bash
+
+            - name: Calculate SHA-256 checksum and create checksum file (Windows)
+              if: matrix.goos == 'windows'
+              run: |
+                  certutil -hashfile vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }} SHA256 > vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}.sha256
+                  $lines = Get-Content vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}.sha256
+                  $lines[1..$($lines.Length-1)] | Set-Content vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}.sha256
+              shell: pwsh
+
+            - name: Upload binary and checksum file as artifacts
+              uses: actions/upload-artifact@v3
+              with:
+                  name: vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}
+                  path: |
+                      vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}
+                      vcw-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}.sha256
+
+    release:
+        needs: build
+        runs-on: ubuntu-24.04
+        steps:
+            - name: Download build artifacts
+              uses: actions/download-artifact@v3
+              with:
+                  path: ./dist
+
+            - name: Move files to temp directory
+              run: |
+                  mkdir temp
+                  find ./dist -mindepth 2 -type f -exec mv {} temp/ \;
+
+            - name: Cleanup and rename temp to dist
+              run: |
+                  rm -rf ./dist
+                  mv temp dist
+
+            - name: Upload binaries and checksums to GitHub Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  files: ./dist/*
+              env:
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}

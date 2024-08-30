@@ -17,7 +17,7 @@ import (
 	"github.com/vairogs/cache-warmer/tools"
 )
 
-var version = "master"
+var version = "nightly"
 
 const (
 	acronym = "CacheWarmer"
@@ -217,7 +217,7 @@ func IsSemanticVersion(v string) bool {
 // If the version is not a semantic version, it creates a link to the commit on the repository.
 // It returns the generated link as a string.
 func GenerateVersionLink(ver string) string {
-	if IsSemanticVersion(ver) {
+	if IsSemanticVersion(ver) || "nightly" == ver {
 		return fmt.Sprintf("%s/releases/tag/%s", repository, ver)
 	}
 

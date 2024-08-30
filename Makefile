@@ -6,15 +6,27 @@ help: ## Outputs this help screen
 run: ## Run the main go file on a Symfony project
 	go run vcw.go $(path)
 
+VERSION := $(shell git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)
+
 build: ## Build the vcw executable for the current platform
-	go build -o bin/vcw vcw.go
-	shasum -a 256 bin/vcw
+	${MAKE} lint
+	go build -ldflags="-X main.version=$(VERSION) -s -w" -o vcw
+	strip vcw
+	shasum -a 256 vcw
+
+build-win: ## Build the vcw executable for the current platform
+	go build -ldflags="-X main.version=$(VERSION) -s -w" -o vcw.exe
+	shasum -a 256 vcw.exe
 
 clean: ## Clean all executable
-	rm -f bin/vcw bin/vcw.exe
+	rm -f vcw vcw.exe
 
 deps: clean ## Clean deps
+	go mod tidy
 	go get -d -v ./...
+
+update: ## Update dependecies
+	go get -u ./...
 
 ## —— Tests ✅ —————————————————————————————————————————————————————————————————
 test: ## Run all tests

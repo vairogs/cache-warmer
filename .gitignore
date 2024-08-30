@@ -1,4 +1,2 @@
 vcw
 vcw.exe
-bin/*
-!bin/.gitignore

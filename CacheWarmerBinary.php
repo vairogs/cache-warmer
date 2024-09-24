@@ -20,6 +20,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Process\Process;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Throwable;
 use Vairogs\Component\Functions\Local;
 use Vairogs\Component\Functions\Php;
 use Vairogs\Component\Functions\Web;
@@ -36,10 +37,8 @@ use function is_file;
 use function is_resource;
 use function is_writable;
 use function sprintf;
-use function stripos;
 
 use const PHP_EOL;
-use const PHP_OS_FAMILY;
 
 final class CacheWarmerBinary
 {
@@ -78,14 +77,17 @@ final class CacheWarmerBinary
         $info = $_helper->systemInfo();
 
         if (!$manual) {
-            $process = new Process(0 === stripos(PHP_OS_FAMILY, 'WIN') ? ['ping', '-n', '4', 'github.com'] : ['ping', '-c', '4', 'github.com']);
-            $process->setTimeout(5)->run();
+            try {
+                $response = $this->httpClient->request(Request::METHOD_HEAD, 'https://github.com');
 
-            if (!$process->isSuccessful()) {
+                if (Response::HTTP_OK !== $response->getStatusCode()) {
+                    throw new RuntimeException('https://github.com could not be reached');
+                }
+            } catch (Throwable $throwable) {
                 $version = 'nightly' === $this->bag->get('vairogs.cache_warmer.version') ? 'nightly' : 'latest';
                 $url = sprintf('https://github.com/%s/releases/download/%s/cache-warmer-%s-%s%s', self::REPOSITORY, $version, ...array_values($info));
 
-                throw new RuntimeException(sprintf('Unable to connect to github!%sPlease download desired binary from %s, put it in var/vairogs/bin/manual (name MUST match as is in github) and run this command again with --manual option', PHP_EOL, $url));
+                throw new RuntimeException(sprintf('Unable to connect to github!%sPlease download desired binary from %s, put it in var/%s/manual (name MUST match as is in github) and run this command again with --manual option', PHP_EOL, self::REPOSITORY, $url), previous: $throwable);
             }
 
             $configVersion = $this->bag->get('vairogs.cache_warmer.version');

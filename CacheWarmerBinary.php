@@ -29,11 +29,13 @@ use function array_values;
 use function chmod;
 use function fclose;
 use function file_put_contents;
+use function filesize;
 use function fopen;
 use function fwrite;
 use function getcwd;
 use function is_dir;
 use function is_file;
+use function is_int;
 use function is_resource;
 use function is_writable;
 use function sprintf;
@@ -162,8 +164,8 @@ final class CacheWarmerBinary
             chmod($binary, 0o777);
         }
 
-        if (!is_file($binary)) {
-            throw new RuntimeException(sprintf('Cannot find file "%s"', $binary));
+        if (!is_file($binary) || false === ($filesize = filesize($binary)) || !is_int($filesize) || 1 > $filesize) {
+            throw new RuntimeException(sprintf('Cannot find or open file "%s"', $binary));
         }
 
         return (new Process([$binary, ...$arguments], getcwd()))

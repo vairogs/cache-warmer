@@ -42,7 +42,7 @@ use function sprintf;
 
 use const PHP_EOL;
 
-final class CacheWarmerBinary
+class CacheWarmerBinary
 {
     public const string REPOSITORY = 'lettland/cache-warmer';
     private ?SymfonyStyle $output = null;
@@ -168,7 +168,7 @@ final class CacheWarmerBinary
             throw new RuntimeException(sprintf('Cannot find or open file "%s"', $binary));
         }
 
-        return (new Process([$binary, ...$arguments], getcwd()))
+        return new Process([$binary, ...$arguments], getcwd())
             ->setTty(Process::isTtySupported())
             ->setEnv(['TERM' => 'xterm-256color', 'FORCE_COLOR' => '1'])
             ->setTimeout(null);

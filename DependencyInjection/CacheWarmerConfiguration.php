@@ -13,7 +13,7 @@ namespace Vairogs\Component\CacheWarmer\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Vairogs\Bundle\DependencyInjection\AbstractDependencyConfiguration;
-use Vairogs\Component\Functions\Vairogs;
+use Vairogs\Bundle\VairogsBundle;
 
 use function sprintf;
 
@@ -27,7 +27,7 @@ class CacheWarmerConfiguration extends AbstractDependencyConfiguration
         $rootNode
             ->children()
                 ->arrayNode($component)
-                    ->{$enableIfStandalone(sprintf('%s/%s', Vairogs::VAIROGS, $component), self::class)}()
+                    ->{$enableIfStandalone(sprintf('%s/%s', VairogsBundle::VAIROGS, $component), self::class)}()
                     ->children()
                         ->scalarNode('version')->defaultValue('latest')->end()
                     ->end()

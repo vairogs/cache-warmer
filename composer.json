@@ -11,10 +11,10 @@
         "symfony/http-client-contracts": "*",
         "symfony/http-foundation": "*",
         "symfony/process": "*",
-        "vairogs/bundle": "*",
-        "vairogs/functions-local": "*",
-        "vairogs/functions-php": "*",
-        "vairogs/functions-web": "*"
+        "vairogs/bundle": "self.version",
+        "vairogs/functions-local": "self.version",
+        "vairogs/functions-php": "self.version",
+        "vairogs/functions-web": "self.version"
     },
     "minimum-stability": "dev",
     "prefer-stable": false,

@@ -21,9 +21,9 @@ use Symfony\Component\Process\Process;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
-use Vairogs\Component\Functions\Local;
-use Vairogs\Component\Functions\Php;
-use Vairogs\Component\Functions\Web;
+use Vairogs\Functions\Local;
+use Vairogs\Functions\Php;
+use Vairogs\Functions\Web;
 
 use function array_values;
 use function chmod;
@@ -69,10 +69,10 @@ class CacheWarmerBinary
 
         if (null === $_helper) {
             $_helper = new class {
-                use Local\_CurlUA;
-                use Local\_MkDir;
-                use Php\_SystemInfo;
-                use Web\_LatestReleaseTag;
+                use Local\Traits\_CurlUA;
+                use Local\Traits\_MkDir;
+                use Php\Traits\_SystemInfo;
+                use Web\Traits\_LatestReleaseTag;
             };
         }
 

@@ -1,22 +1,7 @@
 {
     "name": "vairogs/cache-warmer",
-    "type": "library",
     "license": "BSD-3-Clause",
-    "autoload": {
-        "psr-4": {
-            "Vairogs\\Component\\CacheWarmer\\": ""
-        }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": false,
-    "config": {
-        "sort-packages": true
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "0.1.x-dev"
-        }
-    },
+    "type": "library",
     "require": {
         "php": ">=8.4",
         "symfony/config": "*",
@@ -27,6 +12,23 @@
         "symfony/http-foundation": "*",
         "symfony/process": "*",
         "vairogs/bundle": "*",
-        "vairogs/functions": "*"
+        "vairogs/functions-local": "*",
+        "vairogs/functions-php": "*",
+        "vairogs/functions-web": "*"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": false,
+    "autoload": {
+        "psr-4": {
+            "Vairogs\\Component\\CacheWarmer\\": ""
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1.x-dev"
+        }
     }
 }
